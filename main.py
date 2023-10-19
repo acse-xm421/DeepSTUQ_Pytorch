@@ -184,7 +184,12 @@ averaged_model.load_state_dict(torch.load('awa_train.pth'))
 # ### Model Calibration
 
 T = train_cali_mc(trainer.model,1, args, val_loader, scaler) #10
-combined_test(trainer.model,10,trainer.args, trainer.test_loader, scaler,T)
+
+# Save the model to the .pth file
+torch.save(T, "T.pth")
+loaded_T = torch.load("T.pth")
+
+combined_test(trainer.model,10,trainer.args, trainer.test_loader, scaler,loaded_T)
 
 
 
