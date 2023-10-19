@@ -151,24 +151,25 @@ if args.lr_decay:
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizer,
                                                         milestones=lr_decay_steps,
                                                         gamma=args.lr_decay_rate)
-# start training
-trainer = Trainer(model, loss, optimizer, train_loader, val_loader, test_loader, scaler,
-                  args, lr_scheduler=lr_scheduler)
+# # start training
+# trainer = Trainer(model, loss, optimizer, train_loader, val_loader, test_loader, scaler,
+#                   args, lr_scheduler=lr_scheduler)
 
 
-### Pre-traning
-trainer.train()
+# ### Pre-traning
+# trainer.train()
 
 # # Save the entire model including its architecture and learned parameters
-# # torch.save(trainer.model, 'your_model.pth')
-trainer.save_to_file('trainer.pth')
+# trainer.save_to_file('trainer.pth')
+
+
 
 trainer_0 = Trainer.load_from_file('trainer.pth')
-# model = torch.load('your_model.pth')
+
 # # ### AWA Re-training 
+model = awa_train_combined(trainer_0,epoch_swa=1) #trainer.model
 
-model = awa_train_combined(trainer_0,epoch_swa=20) #trainer.model
-
+torch.save(model, "awa_train.pth")
 
 # ### Model Calibration
 
