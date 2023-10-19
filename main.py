@@ -32,7 +32,7 @@ MODEL = 'AGCRN'
 MODEL_NAME = "combined"#"combined/basic/dropout/heter"
 
 #get configuration
-config_file = 'DeepSTUQ_Pytorch/model/{}_{}.conf'.format(DATASET, MODEL)
+config_file = 'model/{}_{}.conf'.format(DATASET, MODEL)
 #print('Read configuration file: %s' % (config_file))
 config = configparser.ConfigParser()
 config.read(config_file)
