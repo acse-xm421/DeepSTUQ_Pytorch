@@ -189,7 +189,7 @@ averaged_model.load_state_dict(torch.load('awa_train.pth'))
 # torch.save(T, "T.pth")
 loaded_T = torch.load("T.pth")
 
-combined_test(trainer.model,10,trainer.args, trainer.test_loader, scaler,loaded_T)
+combined_test(trainer.model,1,trainer.args, trainer.test_loader, scaler,loaded_T)#10
 
 
 
