@@ -47,6 +47,12 @@ def combined_test(model,num_samples,args, data_loader, scaler, T=torch.zeros(1),
     
     mpiw = 2*1.96*torch.mean(total_std)    
     nll = nll_fun(y_pred.ravel(), y_true.ravel(), total_var.ravel())
+
+    # Calculate metrics
+    mae = torch.abs(y_pred - y_true).mean().item()
+    rmse = torch.sqrt(((y_pred - y_true) ** 2).mean()).item()
+    mape = (torch.abs(y_pred - y_true) / (y_true + 1e-6)).mean().item()
+
     lower_bound = y_pred-1.96*total_std
     upper_bound = y_pred+1.96*total_std
     in_num = torch.sum((y_true >= lower_bound)&(y_true <= upper_bound ))
