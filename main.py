@@ -165,17 +165,17 @@ if args.lr_decay:
 
 
 
-trainer_0 = Trainer.load_from_file('trainer.pth')
+trainer = Trainer.load_from_file('trainer.pth')
 
-# # ### AWA Re-training 
-model = awa_train_combined(trainer_0,epoch_swa=1) #trainer.model
+# # # ### AWA Re-training 
+# model = awa_train_combined(trainer_0,epoch_swa=1) #trainer.model #20
 
-# Save the state dictionary of the AveragedModel
-torch.save(model.state_dict(), 'awa_train.pth')
+# # Save the state dictionary of the AveragedModel
+# torch.save(model.state_dict(), 'awa_train.pth')
 
 # torch.save(model, "awa_train.pth")
 
-averaged_model = AveragedModel(trainer_0.model)
+averaged_model = AveragedModel(trainer.model)
 
 # Load the saved state dictionary into the model
 averaged_model.load_state_dict(torch.load('awa_train.pth'))
@@ -183,8 +183,8 @@ averaged_model.load_state_dict(torch.load('awa_train.pth'))
 
 # ### Model Calibration
 
-T = train_cali_mc(trainer_0.model,10, args, val_loader, scaler)
-# combined_test(trainer.model,10,trainer.args, trainer.test_loader, scaler,T)
+T = train_cali_mc(trainer.model,1, args, val_loader, scaler) #10
+combined_test(trainer.model,10,trainer.args, trainer.test_loader, scaler,T)
 
 
 
