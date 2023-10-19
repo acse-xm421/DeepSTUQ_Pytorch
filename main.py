@@ -21,6 +21,7 @@ import torch.nn.functional as F
 import torchcontrib
 from model.train_methods import awa_train_combined, train_cali_mc
 from model.test_methods import combined_test
+from torch.optim.swa_utils import AveragedModel, SWALR
 
 
 #*************************************************************************#
@@ -169,11 +170,20 @@ trainer_0 = Trainer.load_from_file('trainer.pth')
 # # ### AWA Re-training 
 model = awa_train_combined(trainer_0,epoch_swa=1) #trainer.model
 
-torch.save(model, "awa_train.pth")
+# Save the state dictionary of the AveragedModel
+torch.save(model.state_dict(), 'awa_train.pth')
+
+# torch.save(model, "awa_train.pth")
+
+averaged_model = AveragedModel(trainer_0.model)
+
+# Load the saved state dictionary into the model
+averaged_model.load_state_dict(torch.load('awa_train.pth'))
+
 
 # ### Model Calibration
 
-# T = train_cali_mc(trainer.model,10, args, val_loader, scaler)
+T = train_cali_mc(trainer_0.model,10, args, val_loader, scaler)
 # combined_test(trainer.model,10,trainer.args, trainer.test_loader, scaler,T)
 
 
