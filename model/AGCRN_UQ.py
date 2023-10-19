@@ -102,21 +102,21 @@ class AGCRN_UQ(nn.Module):
         # print(torch.isinf(output).any())
         
         if  self.model_name == "combined":  
-            process = psutil.Process()
-            memory_limits = process.memory_full_info()
-            print(f"Memory Soft Limit: {memory_limits.rss / (1024 * 1024):.2f} MB")
+            # process = psutil.Process()
+            # memory_limits = process.memory_full_info()
+            # print(f"Memory Soft Limit: {memory_limits.rss / (1024 * 1024):.2f} MB")
 
-            memory_info = process.memory_info()
-            print(f"Memory Usage: {memory_info.rss / (1024 * 1024):.2f} MB")
+            # memory_info = process.memory_info()
+            # print(f"Memory Usage: {memory_info.rss / (1024 * 1024):.2f} MB")
 
             log_var = self.get_log_var((output))         # why log_var?                #B, T*C, N, 1
             # print(log_var.shape)
             log_var = log_var.squeeze(-1).reshape(-1, self.horizon, self.output_dim, self.num_node)
             log_var = log_var.permute(0, 1, 3, 2)  
 
-            process = psutil.Process()
-            memory_info = process.memory_info()
-            print(f"Memory Usage: {memory_info.rss / (1024 * 1024):.2f} MB")
+            # process = psutil.Process()
+            # memory_info = process.memory_info()
+            # print(f"Memory Usage: {memory_info.rss / (1024 * 1024):.2f} MB")
 
             mu = self.get_mu((output))
             # print(mu.shape)                         #B, T*C, N, 1

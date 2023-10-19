@@ -5,7 +5,7 @@ from lib.metrics import All_Metrics
 from tqdm import tqdm 
 
 ####======MC+Heter========####
-def combined_test(model,num_samples,args, data_loader, scaler, T=torch.zeros(1), logger=None, path=None):#.cuda()
+def combined_test(model,num_samples,args, data_loader, scaler, T=torch.zeros(1).cuda(), logger=None, path=None):#
     model.eval()
     enable_dropout(model)
     nll_fun = nn.GaussianNLLLoss()
@@ -16,8 +16,8 @@ def combined_test(model,num_samples,args, data_loader, scaler, T=torch.zeros(1),
             y_true.append(label)
     y_true = scaler.inverse_transform(torch.cat(y_true, dim=0)).squeeze(3)
     
-    mc_mus = torch.empty(0, y_true.size(0), y_true.size(1), y_true.size(2))#.cuda()
-    mc_log_vars = torch.empty(0, y_true.size(0),y_true.size(1), y_true.size(2))#.cuda()
+    mc_mus = torch.empty(0, y_true.size(0), y_true.size(1), y_true.size(2)).cuda()
+    mc_log_vars = torch.empty(0, y_true.size(0),y_true.size(1), y_true.size(2)).cuda()
     
     with torch.no_grad():
         for i in tqdm(range(num_samples)):

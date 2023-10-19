@@ -49,7 +49,7 @@ class Trainer(object):
                 
                 elif self.args.model_name == "heter" or self.args.model_name=="combined": # encoder-decoder
                     output, _ = self.model(data, target, teacher_forcing_ratio=0.)
-                    loss = self.loss(output, label)#.cuda()
+                    loss = self.loss(output.cuda(), label)
                 
                 elif self.args.model_name == "quantile": #?
                     output = self.model(data, target, teacher_forcing_ratio=0.)                

@@ -152,43 +152,34 @@ if args.lr_decay:
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizer,
                                                         milestones=lr_decay_steps,
                                                         gamma=args.lr_decay_rate)
-# # start training
-# trainer = Trainer(model, loss, optimizer, train_loader, val_loader, test_loader, scaler,
-#                   args, lr_scheduler=lr_scheduler)
+
+# start training
+trainer = Trainer(model, loss, optimizer, train_loader, val_loader, test_loader, scaler,
+                  args, lr_scheduler=lr_scheduler)
+
+### Pre-traning
+trainer.train()
+
+# Save the entire model including its architecture and learned parameters
+trainer.save_to_file('trainer_3.pth')
 
 
-# ### Pre-traning
-# trainer.train()
-
-# # Save the entire model including its architecture and learned parameters
-# trainer.save_to_file('trainer.pth')
-
-
-
-trainer = Trainer.load_from_file('trainer.pth')
-
-# # # ### AWA Re-training 
-# model = awa_train_combined(trainer_0,epoch_swa=1) #trainer.model #20
-
-# # Save the state dictionary of the AveragedModel
-# torch.save(model.state_dict(), 'awa_train.pth')
-
-# torch.save(model, "awa_train.pth")
+### AWA Re-training
+trainer = Trainer.load_from_file('trainer_3.pth')
+model = awa_train_combined(trainer,epoch_swa=1) #trainer.model #20
+torch.save(model.state_dict(), 'awa_train.pth')
 
 averaged_model = AveragedModel(trainer.model)
-
-# Load the saved state dictionary into the model
 averaged_model.load_state_dict(torch.load('awa_train.pth'))
 
 
-# ### Model Calibration
 
-# T = train_cali_mc(trainer.model,1, args, val_loader, scaler) #10
+### Model Calibration
+T = train_cali_mc(trainer.model,1, args, val_loader, scaler) #10
+torch.save(T, "T.pth")
 
-# Save the model to the .pth file
-# torch.save(T, "T.pth")
+### Model testing
 loaded_T = torch.load("T.pth")
-
 combined_test(trainer.model,1,trainer.args, trainer.test_loader, scaler,loaded_T)#10
 
 
