@@ -5,7 +5,7 @@ from lib.metrics import All_Metrics
 from tqdm import tqdm 
 
 ####======MC+Heter========####
-def combined_test(model,num_samples,args, data_loader, scaler, T=torch.zeros(1).cuda(), logger=None, path=None):
+def combined_test(model,num_samples,args, data_loader, scaler, T=torch.zeros(1), logger=None, path=None):#.cuda()
     model.eval()
     enable_dropout(model)
     nll_fun = nn.GaussianNLLLoss()

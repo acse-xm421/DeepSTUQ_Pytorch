@@ -11,12 +11,13 @@ class AVWGCN(nn.Module):
  
         self.model_name = model_name    
         self.p1= p1
-        
+
     def forward(self, x, node_embeddings):
         #x shaped[B, N, C], node_embeddings shaped [N, D] -> supports shaped [N, N]
         #output shape [B, N, C]
-        node_num = node_embeddings.shape[0]
-        supports = F.softmax(F.relu(torch.mm(node_embeddings, node_embeddings.transpose(0, 1))), dim=1)
+        # A_baEW+Eb
+        node_num = node_embeddings.shape[0] # node_embeddings = E
+        supports = F.softmax(F.relu(torch.mm(node_embeddings, node_embeddings.transpose(0, 1))), dim=1) # A_ba = softmax(RELU(EE^T))
         support_set = [torch.eye(node_num).to(supports.device), supports]
         #default cheb_k = 3
         for k in range(2, self.cheb_k):

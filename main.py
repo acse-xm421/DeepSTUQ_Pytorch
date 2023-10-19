@@ -19,7 +19,7 @@ from tqdm import tqdm
 from copy import deepcopy
 import torch.nn.functional as F
 import torchcontrib
-from model.train_methods import awa_train_combined, train_cali_mcx
+from model.train_methods import awa_train_combined, train_cali_mc
 from model.test_methods import combined_test
 
 
@@ -151,24 +151,29 @@ if args.lr_decay:
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizer,
                                                         milestones=lr_decay_steps,
                                                         gamma=args.lr_decay_rate)
-#start training
-trainer = Trainer(model, loss, optimizer, train_loader, val_loader, test_loader, scaler,
-                  args, lr_scheduler=lr_scheduler)
+# # start training
+# trainer = Trainer(model, loss, optimizer, train_loader, val_loader, test_loader, scaler,
+#                   args, lr_scheduler=lr_scheduler)
 
 
-### Pre-traning
-trainer.train()
+# ### Pre-traning
+# trainer.train()
+
+# # # Save the entire model including its architecture and learned parameters
+# # # torch.save(trainer.model, 'your_model.pth')
+# trainer.save_to_file('trainer.pth')
+
+trainer_0 = Trainer.load_from_file('trainer.pth')
+# model = torch.load('your_model.pth')
+# # ### AWA Re-training 
+
+model = awa_train_combined(trainer_0,epoch_swa=20) #trainer.model
 
 
-### AWA Re-training 
+# ### Model Calibration
 
-#trainer.model = awa_train_combined(trainer,epochs=20)
-
-
-### Model Calibration
-
-T = train_cali_mc(trainer.model,10, args, val_loader, scaler)
-combined_test(trainer.model,10,trainer.args, trainer.test_loader, scaler,T)
+# T = train_cali_mc(trainer.model,10, args, val_loader, scaler)
+# combined_test(trainer.model,10,trainer.args, trainer.test_loader, scaler,T)
 
 
 

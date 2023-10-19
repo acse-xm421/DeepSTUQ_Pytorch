@@ -43,19 +43,19 @@ class Trainer(object):
                 if self.args.real_value:
                     label = self.scaler.inverse_transform(label)   
                     
-                if self.args.model_name == "basic" or self.args.model_name=="dropout":
+                if self.args.model_name == "basic" or self.args.model_name=="dropout": # only encoder
                     output = self.model(data, target, teacher_forcing_ratio=0.)
                     loss = self.loss(output.cuda(), label)
                 
-                elif self.args.model_name == "heter" or self.args.model_name=="combined":
+                elif self.args.model_name == "heter" or self.args.model_name=="combined": # encoder-decoder
                     output, _ = self.model(data, target, teacher_forcing_ratio=0.)
-                    loss = self.loss(output.cuda(), label)
+                    loss = self.loss(output, label)#.cuda()
                 
-                elif self.args.model_name == "quantile": 
+                elif self.args.model_name == "quantile": #?
                     output = self.model(data, target, teacher_forcing_ratio=0.)                
                     loss = self.quantile_loss(output,label)
                 
-                #a whole batch of Metr_LA is filtered
+                #a whole batch of Metr_LA is filtered #?
                 if not torch.isnan(loss):
                     total_val_loss += loss.item()
         val_loss = total_val_loss / len(val_dataloader)
@@ -202,7 +202,7 @@ class Trainer(object):
                 
                 #label = torch.log(label)
                 
-                output = model(data, target, teacher_forcing_ratio=0)
+                output = model(data, target, teacher_forcing_ratio=0) # categorize
                 #output, *_ = model(data, target, teacher_forcing_ratio=0)
                 y_true.append(label)
                 y_pred.append(output)
@@ -222,3 +222,53 @@ class Trainer(object):
         print("Average Horizon, MAE: {:.2f}, RMSE: {:.2f}, MAPE: {:.4f}%".format(
                     mae, rmse, mape*100))
     
+    def save_to_file(self, file_path):
+    # Collect the Trainer's state information to save to the file
+        state = {
+            'model': self.model,
+            'loss': self.loss,
+            'optimizer': self.optimizer,
+            # 'model_state_dict': self.model.state_dict(),
+            # 'optimizer_state_dict': self.optimizer.state_dict(),
+            'train_loader': self.train_loader,
+            'val_loader': self.val_loader,
+            'test_loader': self.test_loader,
+            'scaler': self.scaler,
+            'args': self.args,
+            'lr_scheduler': self.lr_scheduler,
+            # Add any other relevant attributes or state
+        }
+        # Save the state to the file
+        torch.save(state, file_path)
+
+    @classmethod
+    def load_from_file(cls, file_path):
+        # Load the state from the file
+        state = torch.load(file_path)
+
+        model = state['model']
+        loss = state['loss']
+        optimizer = state['optimizer']
+        train_loader = state['train_loader']
+        val_loader = state['val_loader']
+        test_loader = state['test_loader']
+        scaler = state['scaler']
+        args = state['args']
+        lr_scheduler = state['lr_scheduler']
+        # train_per_epoch = len(train_loader)
+
+        # # Set the Trainer's attributes from the loaded state
+        # model_state = state['model_state_dict']
+        # optimizer_state = state['optimizer_state_dict']
+        # train_loader = state['train_loader']
+        # val_loader = state['val_loader']
+        # test_loader = state['test_loader']
+        # scaler = state['scaler']
+        # args = state['args']
+        # lr_scheduler = state['lr_scheduler']
+
+        # Create a new Trainer instance
+        trainer = Trainer(model, loss, optimizer, train_loader, val_loader, test_loader, scaler, args, lr_scheduler)
+
+        # Set any other relevant attributes from the loaded state
+        return trainer

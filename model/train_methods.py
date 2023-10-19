@@ -16,8 +16,8 @@ def awa_train_combined(trainer,epoch_swa, regularizer=None, lr_schedule=None):
     lr1 = 0.003
     lr2 = lr1*0.01
     
-    optimizer_swa = torch.optim.Adam(params=model.parameters(), lr=lr1, betas=(0.9,0.99),
-                            weight_decay=1e-4, amsgrad=False)
+    optimizer_swa = torch.optim.Adam(params=trainer.model.parameters(), lr=lr1, betas=(0.9,0.99),
+                            weight_decay=1e-4, amsgrad=False)#model.parameters()
 
     cycle = num_iters
     swa_c = 1
@@ -34,21 +34,24 @@ def awa_train_combined(trainer,epoch_swa, regularizer=None, lr_schedule=None):
             label = target[..., :trainer.args.output_dim]  # (..., 1)
             optimizer_swa.zero_grad()       
 
-            input = input.cuda(non_blocking=True)
-            label = label.cuda(non_blocking=True)
+            # input = input.cuda(non_blocking=True)
+            # label = label.cuda(non_blocking=True)
 
             if trainer.args.teacher_forcing:
-                global_step = (epoch - 1) * trainer.train_per_epoch + batch_idx
+                global_step = (epoch - 1) * trainer.train_per_epoch + iter #batch_idx
                 teacher_forcing_ratio = trainer._compute_sampling_threshold(global_step, trainer.args.tf_decay_steps)
             else:
                 teacher_forcing_ratio = 1.
             #output,log_var = trainer.model.forward_heter(data, target, teacher_forcing_ratio=teacher_forcing_ratio)
-            mu,log_var = trainer.model.forward(data, target, teacher_forcing_ratio=0.5)
+            mu,log_var = trainer.model.forward(data, target, teacher_forcing_ratio=teacher_forcing_ratio)#0.5
             if trainer.args.real_value:
                 label = trainer.scaler.inverse_transform(label)
             loss = torch.mean(torch.exp(-log_var)*(label-mu)**2 + log_var)
             loss = 0.1*loss + 0.9*trainer.loss(mu, label)  
             #loss = trainer.loss(mu, label)
+
+            # routine
+            # optimizer_swa.zero_grad()
             loss.backward()
             optimizer_swa.step()
             if (epoch % 2 ==0) & (iter != num_iters-1):
@@ -72,8 +75,8 @@ def swa_train(trainer,epoch_swa, regularizer=None, lr_schedule=None):
     lr1 = 0.003#0.1
     lr2 = lr1*0.01#0.001
     
-    optimizer_swa = torch.optim.Adam(params=model.parameters(), lr=lr1, betas=(0.9,0.99),
-                            weight_decay=1e-4, amsgrad=False)
+    optimizer_swa = torch.optim.Adam(params=trainer.model.parameters(), lr=lr1, betas=(0.9,0.99),
+                            weight_decay=1e-4, amsgrad=False)#model.parameters()
 
     cycle = num_iters
     swa_c = 1
@@ -89,11 +92,11 @@ def swa_train(trainer,epoch_swa, regularizer=None, lr_schedule=None):
             label = target[..., :trainer.args.output_dim]  # (..., 1)
             optimizer_swa.zero_grad()       
 
-            input = input.cuda(non_blocking=True)
-            label = label.cuda(non_blocking=True)
+            # input = input.cuda(non_blocking=True)
+            # label = label.cuda(non_blocking=True)
 
             if trainer.args.teacher_forcing:
-                global_step = (epoch - 1) * trainer.train_per_epoch + batch_idx
+                global_step = (epoch - 1) * trainer.train_per_epoch + iter #batch_idx
                 teacher_forcing_ratio = trainer._compute_sampling_threshold(global_step, trainer.args.tf_decay_steps)
             else:
                 teacher_forcing_ratio = 1.
@@ -125,7 +128,7 @@ class ModelCali(nn.Module):
         
               
 def train_cali(model, args, data_loader, scaler, logger=None, path=None):
-    model_cali = ModelCali(args).cuda()
+    model_cali = ModelCali(args)#.cuda()
     optimizer_cali = torch.optim.LBFGS(list(model_cali.parameters()), lr=0.02, max_iter=500)
     model.eval()
     #nll_fun = nn.GaussianNLLLoss()
@@ -165,7 +168,7 @@ def train_cali(model, args, data_loader, scaler, logger=None, path=None):
     
     
 def train_cali_mc(model,num_samples, args, data_loader, scaler, logger=None, path=None):
-    model_cali = ModelCali(args).cuda()
+    model_cali = ModelCali(args)#.cuda()
     optimizer_cali = torch.optim.LBFGS(list(model_cali.parameters()), lr=0.02, max_iter=500)
     model.eval()
     enable_dropout(model)
@@ -177,8 +180,8 @@ def train_cali_mc(model,num_samples, args, data_loader, scaler, logger=None, pat
             y_true.append(label)
     y_true = scaler.inverse_transform(torch.cat(y_true, dim=0)).squeeze(3)
     
-    mc_mus = torch.empty(0, y_true.size(0), y_true.size(1), y_true.size(2)).cuda()
-    mc_log_vars = torch.empty(0, y_true.size(0),y_true.size(1), y_true.size(2)).cuda()
+    mc_mus = torch.empty(0, y_true.size(0), y_true.size(1), y_true.size(2))#.cuda()
+    mc_log_vars = torch.empty(0, y_true.size(0),y_true.size(1), y_true.size(2))#.cuda()
     
     with torch.no_grad():
         for i in tqdm(range(num_samples)):
