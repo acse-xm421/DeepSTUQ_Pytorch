@@ -27,7 +27,7 @@ from torch.optim.swa_utils import AveragedModel, SWALR
 #*************************************************************************#
 Mode = 'train'
 DEBUG = 'True'
-DATASET = 'PEMS08'      #PEMS04/8/3/7
+DATASET = 'station'      #PEMS04/8/3/7
 DEVICE = 'cuda:0'
 MODEL = 'AGCRN'
 MODEL_NAME = "combined"#"combined/basic/dropout/heter"
