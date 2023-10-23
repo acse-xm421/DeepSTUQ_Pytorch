@@ -74,6 +74,7 @@ def split_data_by_ratio(data, val_ratio, test_ratio):
 def data_loader(X, Y, batch_size, shuffle=True, drop_last=True):
     cuda = True if torch.cuda.is_available() else False
     TensorFloat = torch.cuda.FloatTensor if cuda else torch.FloatTensor
+    # print(X.shape, Y.shape)
     X, Y = TensorFloat(X), TensorFloat(Y)
     data = torch.utils.data.TensorDataset(X, Y)
     dataloader = torch.utils.data.DataLoader(data, batch_size=batch_size,

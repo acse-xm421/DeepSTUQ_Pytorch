@@ -27,7 +27,7 @@ from torch.optim.swa_utils import AveragedModel, SWALR
 #*************************************************************************#
 Mode = 'train'
 DEBUG = 'True'
-DATASET = 'PEMS08'      #PEMS04/8/3/7
+DATASET = 'station'      #PEMS04/8/3/7 #PEMS08
 DEVICE = 'cuda:0'
 MODEL = 'AGCRN'
 MODEL_NAME = "combined"#"combined/basic/dropout/heter"
@@ -131,6 +131,7 @@ train_loader, val_loader, test_loader, scaler = get_dataloader(args,
                                                                normalizer=args.normalizer,
                                                                tod=args.tod, dow=False,
                                                                weather=False, single=False)
+# print(train_loader.dataset.x.shape, train_loader.dataset.y.shape)
 #init loss function, optimizer
 if args.loss_func == 'mask_mae':
     loss = masked_mae_loss(scaler, mask_value=0.0)
@@ -161,33 +162,31 @@ if args.lr_decay:
 # trainer.train()
 
 # # Save the entire model including its architecture and learned parameters
-# trainer.save_to_file('trainer.pth')
+# trainer.save_to_file('trainer_station.pth')
 
 
 
-trainer = Trainer.load_from_file('trainer.pth')
+trainer = Trainer.load_from_file('trainer_station.pth')
 
 # # # ### AWA Re-training 
-# model = awa_train_combined(trainer_0,epoch_swa=1) #trainer.model #20
+# model = awa_train_combined(trainer,epoch_swa=1) #trainer.model #20
 
 # # Save the state dictionary of the AveragedModel
-# torch.save(model.state_dict(), 'awa_train.pth')
-
-# torch.save(model, "awa_train.pth")
+# torch.save(model.state_dict(), 'awa_train_station.pth')
 
 averaged_model = AveragedModel(trainer.model)
 
 # Load the saved state dictionary into the model
-averaged_model.load_state_dict(torch.load('awa_train.pth'))
+averaged_model.load_state_dict(torch.load('awa_train_station.pth'))
 
 
-# ### Model Calibration
+### Model Calibration
 
-# T = train_cali_mc(trainer.model,1, args, val_loader, scaler) #10
+T = train_cali_mc(trainer.model,1, args, val_loader, scaler) #10
 
 # Save the model to the .pth file
-# torch.save(T, "T.pth")
-loaded_T = torch.load("T.pth")
+torch.save(T, "T_station.pth")
+loaded_T = torch.load("T_station.pth")
 
 combined_test(trainer.model,1,trainer.args, trainer.test_loader, scaler,loaded_T)#10
 
