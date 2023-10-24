@@ -182,4 +182,4 @@ torch.save(T, "./station_model_file/T_10.pth")
 loaded_T = torch.load("./station_model_file/T_10.pth")
 combined_test(trainer.model,10,trainer.args, trainer.test_loader, scaler,loaded_T)#10
 
-plot_vi('./station_model_file/predictions.csv', "./station_model_file/vi.png")
+plot_vi('predictions.csv', "vi.png")
