@@ -6,6 +6,7 @@ from tqdm import tqdm
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 ####======MC+Heter========####
@@ -77,6 +78,23 @@ def combined_test(model,num_samples,args, data_loader, scaler, T=torch.zeros(1).
     print("Average Horizon, MAE: {:.4f}, RMSE: {:.4f}, MAPE: {:.4f}%,  NLL: {:.4f}, \
 PICP: {:.4f}%, MPIW: {:.4f}".format(mae, rmse, mape*100, nll, picp*100, mpiw))  
 
+def extract_from_window(data, window=3, horizon=1, single=False):
+    B, H, N, D = data.shape
+    extracted_data = []
+
+    if single:
+        for i in range(B):
+            extracted_data.append(data[i, -1, :, :].reshape((1,N)))
+    else:
+        for i in range(B):
+            if i==0:
+                extracted_data.append(data[i,:,:,:].reshape((H,D)))
+            else:
+                extracted_data.append(data[i, -1, :, :].reshape((1,N)))
+    
+    concatenated_data = torch.cat(extracted_data, axis=0)
+
+    return concatenated_data
 
 def save_pred(y_true, y_pred, lower_bound, upper_bound, csv_file_path):
     print(y_true.size())
@@ -87,6 +105,11 @@ def save_pred(y_true, y_pred, lower_bound, upper_bound, csv_file_path):
     upper_bound_node = upper_bound[-1,:,-1]
 
     print(y_true_node.size())
+
+    y_true_extracted_tensor = extract_from_window(y_true, 12)
+    y_pred_extracted_tensor = extract_from_window(y_pred, 12)
+    lower_bound_extracted_tensor = extract_from_window(lower_bound, 12)
+    upper_bound_extracted_tensor = extract_from_window(upper_bound, 12)
 
     # y_true_tensor = y_true_node.mean(dim=0, keepdim=True)
     # y_pred_tensor = y_pred_node.mean(dim=0, keepdim=True)

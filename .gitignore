@@ -1,3 +1,4 @@
 trainer.pth
 your_model.pth
+lib/__pycache__/
 **/__pycache__
