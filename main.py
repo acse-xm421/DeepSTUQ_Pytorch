@@ -164,13 +164,13 @@ if args.lr_decay:
 # trainer.save_to_file('./station_model_file/trainer_100.pth')
 
 
-# # AWA Re-training
-trainer = Trainer.load_from_file('train_station.pth')
+### AWA Re-training
+trainer = Trainer.load_from_file('./station_model_file/trainer_100.pth')
 # model = awa_train_combined(trainer,epoch_swa=20) #trainer.model #20
 # torch.save(model.state_dict(), './station_model_file/awa_train_20.pth')
 
 averaged_model = AveragedModel(trainer.model)
-averaged_model.load_state_dict(torch.load('awa_train_station.pth'))
+averaged_model.load_state_dict(torch.load('./station_model_file/awa_train_20.pth'))
 
 
 
@@ -179,7 +179,7 @@ averaged_model.load_state_dict(torch.load('awa_train_station.pth'))
 # torch.save(T, "./station_model_file/T_10.pth")
 
 ### Model testing
-loaded_T = torch.load("./station_model_file/T_station.pth")
-combined_test(trainer.model,1,trainer.args, trainer.test_loader, scaler,loaded_T)#10
+loaded_T = torch.load("./station_model_file/T_10.pth")
+combined_test(trainer.model,10,trainer.args, trainer.test_loader, scaler,loaded_T)#10
 
-plot_vi('predictions_test.csv', "vi_test.png")
+plot_vi('predictions.npy', "vi_test.png")

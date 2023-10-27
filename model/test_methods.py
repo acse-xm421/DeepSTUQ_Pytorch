@@ -97,7 +97,7 @@ def extract_from_window(data, window=3, horizon=1, single=False):
     return concatenated_data
 
 def save_pred(y_true, y_pred, lower_bound, upper_bound, csv_file_path):
-    print(y_true.size())
+    print("y_true", y_true.size())
 
     y_true_node = y_true[-1,:,-1]
     y_pred_node = y_pred[-1,:,-1]
