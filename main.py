@@ -182,4 +182,4 @@ averaged_model.load_state_dict(torch.load('./station_model_file/awa_train_20.pth
 loaded_T = torch.load("./station_model_file/T_10.pth")
 combined_test(trainer.model,10,trainer.args, trainer.test_loader, scaler,loaded_T)#10
 
-plot_vi('predictions.npy', "vi_test.png")
+plot_vi('data.pkl', "vi_test.png")
