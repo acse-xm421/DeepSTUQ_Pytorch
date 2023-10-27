@@ -68,6 +68,7 @@ def combined_test(model,num_samples,args, data_loader, scaler, T=torch.zeros(1).
     picp = in_num/(y_true.size(0)*y_true.size(1)*y_true.size(2))
     
     save_pred(y_true, y_pred, lower_bound, upper_bound)
+
     # # Convert the tensor to a pandas DataFrame
     # df = pd.DataFrame(tensor_data.numpy())
 
@@ -80,7 +81,10 @@ def combined_test(model,num_samples,args, data_loader, scaler, T=torch.zeros(1).
     print("Average Horizon, MAE: {:.4f}, RMSE: {:.4f}, MAPE: {:.4f}%,  NLL: {:.4f}, \
 PICP: {:.4f}%, MPIW: {:.4f}".format(mae, rmse, mape*100, nll, picp*100, mpiw))  
 
-def extract_from_window(data, single=False):#
+
+def extract_from_window(data, single=False):
+    # extract data from windows to eliminate overlap data
+
     B, H, N = data.shape
     extracted_data = []
 
@@ -99,16 +103,13 @@ def extract_from_window(data, single=False):#
     return concatenated_data
 
 def save_pred(y_true, y_pred, lower_bound, upper_bound):
-    print("y_true", y_true.size())
+    # save all prediction to a file
 
     y_true_extracted_tensor = extract_from_window(y_true)
     y_pred_extracted_tensor = extract_from_window(y_pred)
     lower_bound_extracted_tensor = extract_from_window(lower_bound)
     upper_bound_extracted_tensor = extract_from_window(upper_bound)
 
-    print("extract", y_true_extracted_tensor.size())
-
-    # Create a dictionary with column names and tensors
     data = {
         'y_true': y_true_extracted_tensor.detach().cpu().numpy(),
         'y_pred': y_pred_extracted_tensor.detach().cpu().numpy(),
@@ -116,10 +117,9 @@ def save_pred(y_true, y_pred, lower_bound, upper_bound):
         'upper_bound': upper_bound_extracted_tensor.detach().cpu().numpy(),
     }
 
-    # Specify the file path where you want to save the data
+    # save to .pkl file
     file_path = 'data.pkl'
 
-    # Open the file in binary write mode and save the data
     with open(file_path, 'wb') as file:
         pickle.dump(data, file)
 
@@ -128,13 +128,24 @@ def save_pred(y_true, y_pred, lower_bound, upper_bound):
 
     print("Successfully saved!")
 
+
+def eval_uncover_frequency(y_true, y_pred, lower_bound, upper_bound):
+    # uncover frequency of y_true
+
+    frequency_below_lower_bound = np.sum(y_true < lower_bound)
+    frequency_above_upper_bound = np.sum(y_true > upper_bound)
+
+    outrange_frequency = (frequency_below_lower_bound + frequency_above_upper_bound)/len(y_true)
+    print("outrange_frequency", outrange_frequency)
+
+    return outrange_frequency
+
+
+
 def plot_vi(file_path, png_file_path):
     # Sample data
     with open(file_path, 'rb') as file:
         loaded_data = pickle.load(file)
-
-    print(loaded_data)
-    print(loaded_data.shape)
 
     y_true = loaded_data['y_true']
     y_pred = loaded_data['y_pred']
@@ -145,15 +156,17 @@ def plot_vi(file_path, png_file_path):
     y_pred = np.transpose(y_pred, (1,0))
     lower_bound = np.transpose(lower_bound, (1,0))
     upper_bound = np.transpose(upper_bound, (1,0))
-    # zip y_true, y_pred, lower_bound, upper_bound
-    # give me an array
 
-    for idx, y_true,y_pred,lower_bound,upper_bound in enumerate(zip(y_true, y_pred, lower_bound, upper_bound)):
+    idx = 1
+
+    for y_true,y_pred,lower_bound,upper_bound in zip(y_true, y_pred, lower_bound, upper_bound):
         # Plot the data
+        x = np.arange(len(y_true))
         plt.figure(figsize=(10, 6))
-        plt.plot(np.range(len(y_true)), y_true, color='black', label='y_true')
-        plt.plot(np.range(len(y_pred)), y_pred, color='blue', label='y_pred')
-        plt.fill_between(np.range(len(lower_bound)), lower_bound, upper_bound, color='lightgray', alpha=0.5, label='Prediction Range')
+        plt.plot(x, y_true, color='black', label='y_true')
+        plt.plot(x, y_pred, color='blue', label='y_pred')
+        plt.fill_between(x, lower_bound, upper_bound, color='lightgray', alpha=0.5, label='Prediction Range')
+        freq = eval_uncover_frequency(y_true, y_pred, lower_bound, upper_bound) * 100
 
         # Add labels and legend
         plt.xlabel('Time')
@@ -161,9 +174,13 @@ def plot_vi(file_path, png_file_path):
         plt.legend()
 
         # Show the plot
-        plt.title('Variational Inference plot')
+        formatted_freq = f'{freq:.2f}'
+        title = f'Variational Inference plot: uncover_freq={formatted_freq} %'
+        plt.title(title)
         plt.grid(True)
-        png_file_path = "idx-" + png_file_path
-        plt.savefig(png_file_path)
+        idx_png_file_path = png_file_path + "_" + str(idx) + ".png"
+        plt.savefig(idx_png_file_path)
         
         plt.show()
+
+        idx += 1

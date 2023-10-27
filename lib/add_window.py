@@ -21,7 +21,7 @@ def Add_Window_Horizon(data, window=3, horizon=1, single=False):
         while index < end_index:
             X.append(data[index:index+window])
             Y.append(data[index+window:index+window+horizon])
-            index = index + window #1
+            index = index + 1
     X = np.array(X)
     Y = np.array(Y)
     return X, Y

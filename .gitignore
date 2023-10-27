@@ -1,4 +1,4 @@
 trainer.pth
 your_model.pth
-lib/__pycache__/
 **/__pycache__
+station_model_file/
