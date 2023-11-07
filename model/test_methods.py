@@ -129,17 +129,31 @@ def save_pred(y_true, y_pred, lower_bound, upper_bound):
     print("Successfully saved!")
 
 
-def eval_uncover_frequency(y_true, y_pred, lower_bound, upper_bound):
+# def eval_uncover_frequency(y_true, y_pred, lower_bound, upper_bound):
+#     # uncover frequency of y_true
+
+#     frequency_below_lower_bound = np.sum(y_true < lower_bound)
+#     frequency_above_upper_bound = np.sum(y_true > upper_bound)
+
+#     outrange_frequency = (frequency_below_lower_bound + frequency_above_upper_bound)/len(y_true)
+#     print("outrange_frequency", outrange_frequency)
+
+#     return outrange_frequency
+
+def pick_uncover_point(y_true, y_pred, lower_bound, upper_bound):
     # uncover frequency of y_true
+    filtered_indices_and_values = [(i, val) for i, val in enumerate(y_true) if val > upper_bound[i] or val < lower_bound[i]]
+    print(filtered_indices_and_values)
+    outrange_frequency = len(filtered_indices_and_values)/len(y_true)
 
-    frequency_below_lower_bound = np.sum(y_true < lower_bound)
-    frequency_above_upper_bound = np.sum(y_true > upper_bound)
 
-    outrange_frequency = (frequency_below_lower_bound + frequency_above_upper_bound)/len(y_true)
+    # frequency_below_lower_bound = np.sum(y_true < lower_bound)
+    # frequency_above_upper_bound = np.sum(y_true > upper_bound)
+
+    # outrange_frequency = (frequency_below_lower_bound + frequency_above_upper_bound)/len(y_true)
     print("outrange_frequency", outrange_frequency)
 
-    return outrange_frequency
-
+    return filtered_indices_and_values, outrange_frequency
 
 
 def plot_vi(file_path, png_file_path):
@@ -162,11 +176,15 @@ def plot_vi(file_path, png_file_path):
     for y_true,y_pred,lower_bound,upper_bound in zip(y_true, y_pred, lower_bound, upper_bound):
         # Plot the data
         x = np.arange(len(y_true))
+
+        filtered_p, freq = pick_uncover_point(y_true, y_pred, lower_bound, upper_bound)
+        indices, values = zip(*filtered_p)
+        plt.scatter(indices, values, marker='x', color='red', label='Outrange Points')
+
         plt.figure(figsize=(10, 6))
         plt.plot(x, y_true, color='black', label='y_true')
         plt.plot(x, y_pred, color='blue', label='y_pred')
         plt.fill_between(x, lower_bound, upper_bound, color='lightgray', alpha=0.5, label='Prediction Range')
-        freq = eval_uncover_frequency(y_true, y_pred, lower_bound, upper_bound) * 100
 
         # Add labels and legend
         plt.xlabel('Time')
