@@ -2,3 +2,4 @@ trainer.pth
 your_model.pth
 **/__pycache__
 station_model_file/
+station_model_file_2/

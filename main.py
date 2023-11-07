@@ -130,7 +130,7 @@ print_model_parameters(model, only_num=False)
 train_loader, val_loader, test_loader, scaler = get_dataloader(args,
                                                                normalizer=args.normalizer,
                                                                tod=args.tod, dow=False,
-                                                               weather=False, single=False)
+                                                               weather=False, single=False) # True
 #init loss function, optimizer
 if args.loss_func == 'mask_mae':
     loss = masked_mae_loss(scaler, mask_value=0.0)
@@ -157,20 +157,20 @@ if args.lr_decay:
 # trainer = Trainer(model, loss, optimizer, train_loader, val_loader, test_loader, scaler,
 #                   args, lr_scheduler=lr_scheduler)
 
-# ### Pre-traning
+# ## Pre-traning
 # trainer.train()
 
-# # Save the entire model including its architecture and learned parameters
+# Save the entire model including its architecture and learned parameters
 # trainer.save_to_file('./station_model_file_2/trainer_100.pth')
 
 
-# ### AWA Re-training
-trainer = Trainer.load_from_file('trainer_station.pth')#./station_model_file_2/trainer_100.pth
+### AWA Re-training
+trainer = Trainer.load_from_file('./station_model_file_2/trainer_100.pth')#
 # model = awa_train_combined(trainer, epoch_swa=20) #trainer.model #20
 # torch.save(model.state_dict(), './station_model_file_2/awa_train_20.pth')
 
 averaged_model = AveragedModel(trainer.model)
-averaged_model.load_state_dict(torch.load('awa_train_station.pth'))#./station_model_file_2/awa_train_20.pth
+averaged_model.load_state_dict(torch.load('./station_model_file_2/awa_train_20.pth'))#
 
 
 
@@ -178,8 +178,8 @@ averaged_model.load_state_dict(torch.load('awa_train_station.pth'))#./station_mo
 # T = train_cali_mc(trainer.model,10, args, val_loader, scaler) #10
 # torch.save(T, "./station_model_file_2/T_10.pth")
 
-# ### Model testing
-loaded_T = torch.load("T_station.pth")#./station_model_file_2/T_10.pth
-combined_test(trainer.model,1,trainer.args, trainer.test_loader, scaler,loaded_T)#10
+### Model testing
+loaded_T = torch.load("./station_model_file_2/T_10.pth")#
+combined_test(trainer.model,10,trainer.args, trainer.test_loader, scaler,loaded_T, single=False)#10
 
-plot_vi('data.pkl', "./plot_try/vi_test")
+plot_vi('data.pkl', "./plot_try/vi_test_not_single")

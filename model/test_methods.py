@@ -12,7 +12,7 @@ import pickle
 
 
 ####======MC+Heter========####
-def combined_test(model,num_samples,args, data_loader, scaler, T=torch.zeros(1).cuda(), logger=None, path=None):#
+def combined_test(model,num_samples,args, data_loader, scaler, T=torch.zeros(1).cuda(), logger=None, path=None, single=True):#
     model.eval()
     enable_dropout(model)
     nll_fun = nn.GaussianNLLLoss()
@@ -21,8 +21,10 @@ def combined_test(model,num_samples,args, data_loader, scaler, T=torch.zeros(1).
         for batch_idx, (_, target) in enumerate(data_loader):
             label = target[..., :args.output_dim]
             y_true.append(label)
+    # print("here y_true.size", len(y_true))
     y_true = scaler.inverse_transform(torch.cat(y_true, dim=0)).squeeze(3)
-    
+    # print("inverse_transform y_true.size=", y_true.size())
+
     mc_mus = torch.empty(0, y_true.size(0), y_true.size(1), y_true.size(2)).cuda()
     mc_log_vars = torch.empty(0, y_true.size(0),y_true.size(1), y_true.size(2)).cuda()
     
@@ -67,7 +69,11 @@ def combined_test(model,num_samples,args, data_loader, scaler, T=torch.zeros(1).
     in_num = torch.sum((y_true >= lower_bound)&(y_true <= upper_bound ))
     picp = in_num/(y_true.size(0)*y_true.size(1)*y_true.size(2))
     
-    save_pred(y_true, y_pred, lower_bound, upper_bound)
+    print("y_true.size=", y_true.size())
+    print("y_pred.size=", y_pred.size())
+    print("lower_bound.size=", lower_bound.size())
+    print("upper_bound.size=", upper_bound.size())
+    save_pred(y_true, y_pred, lower_bound, upper_bound, single)
 
     # # Convert the tensor to a pandas DataFrame
     # df = pd.DataFrame(tensor_data.numpy())
@@ -82,33 +88,33 @@ def combined_test(model,num_samples,args, data_loader, scaler, T=torch.zeros(1).
 PICP: {:.4f}%, MPIW: {:.4f}".format(mae, rmse, mape*100, nll, picp*100, mpiw))  
 
 
-def extract_from_window(data, single=False):
+def extract_from_window(data, single=True):
     # extract data from windows to eliminate overlap data
 
-    B, H, N = data.shape
+    B, H, N = data.shape # batchsize, horizon, node
     extracted_data = []
 
     if single:
         for i in range(B-H+1):
-            extracted_data.append(data[i, -1, :].reshape((1,N)))
+            extracted_data.append(data[i, 1, :].reshape((1,N))) # -1
     else:
         for i in range(B-H+1):
-            if i==0:
+            if i==B-H:
                 extracted_data.append(data[i,:,:].reshape((H,N)))
             else:
-                extracted_data.append(data[i, -1, :].reshape((1,N)))
+                extracted_data.append(data[i, 1, :].reshape((1,N))) # -1
     
     concatenated_data = torch.cat(extracted_data, axis=0)
 
     return concatenated_data
 
-def save_pred(y_true, y_pred, lower_bound, upper_bound):
+def save_pred(y_true, y_pred, lower_bound, upper_bound, single=True):
     # save all prediction to a file
 
-    y_true_extracted_tensor = extract_from_window(y_true)
-    y_pred_extracted_tensor = extract_from_window(y_pred)
-    lower_bound_extracted_tensor = extract_from_window(lower_bound)
-    upper_bound_extracted_tensor = extract_from_window(upper_bound)
+    y_true_extracted_tensor = extract_from_window(y_true, single)
+    y_pred_extracted_tensor = extract_from_window(y_pred, single)
+    lower_bound_extracted_tensor = extract_from_window(lower_bound, single)
+    upper_bound_extracted_tensor = extract_from_window(upper_bound, single)
 
     data = {
         'y_true': y_true_extracted_tensor.detach().cpu().numpy(),
@@ -129,29 +135,10 @@ def save_pred(y_true, y_pred, lower_bound, upper_bound):
     print("Successfully saved!")
 
 
-# def eval_uncover_frequency(y_true, y_pred, lower_bound, upper_bound):
-#     # uncover frequency of y_true
-
-#     frequency_below_lower_bound = np.sum(y_true < lower_bound)
-#     frequency_above_upper_bound = np.sum(y_true > upper_bound)
-
-#     outrange_frequency = (frequency_below_lower_bound + frequency_above_upper_bound)/len(y_true)
-#     print("outrange_frequency", outrange_frequency)
-
-#     return outrange_frequency
-
 def pick_uncover_point(y_true, y_pred, lower_bound, upper_bound):
     # uncover frequency of y_true
     filtered_indices_and_values = [(i, val) for i, val in enumerate(y_true) if val > upper_bound[i] or val < lower_bound[i]]
-    print(filtered_indices_and_values)
-    outrange_frequency = len(filtered_indices_and_values)/len(y_true)
-
-
-    # frequency_below_lower_bound = np.sum(y_true < lower_bound)
-    # frequency_above_upper_bound = np.sum(y_true > upper_bound)
-
-    # outrange_frequency = (frequency_below_lower_bound + frequency_above_upper_bound)/len(y_true)
-    print("outrange_frequency", outrange_frequency)
+    outrange_frequency = len(filtered_indices_and_values)/len(y_true) *100
 
     return filtered_indices_and_values, outrange_frequency
 
@@ -178,13 +165,14 @@ def plot_vi(file_path, png_file_path):
         x = np.arange(len(y_true))
 
         filtered_p, freq = pick_uncover_point(y_true, y_pred, lower_bound, upper_bound)
+        print("uncover_freq=", freq)
         indices, values = zip(*filtered_p)
-        plt.scatter(indices, values, marker='x', color='red', label='Outrange Points')
 
         plt.figure(figsize=(10, 6))
         plt.plot(x, y_true, color='black', label='y_true')
         plt.plot(x, y_pred, color='blue', label='y_pred')
         plt.fill_between(x, lower_bound, upper_bound, color='lightgray', alpha=0.5, label='Prediction Range')
+        plt.scatter(indices, values, marker='x', color='red', label='Outrange Points')
 
         # Add labels and legend
         plt.xlabel('Time')

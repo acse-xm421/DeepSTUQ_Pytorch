@@ -12,6 +12,7 @@ def Add_Window_Horizon(data, window=3, horizon=1, single=False):
     X = []      #windows
     Y = []      #horizon
     index = 0
+    print("single", single)
     if single:
         while index < end_index:
             X.append(data[index:index+window])
